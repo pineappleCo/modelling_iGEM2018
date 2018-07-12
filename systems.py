@@ -30,17 +30,17 @@ class Systems():
   def imm_only(self, y, t):
      imm_mRNA = y[0]
      imm = y[1]
-     #the model equations
+     #the model equations 
      d_imm_mRNA_dt = (self.imm_copy_num * self.imm_promoter_str * self.imm_transcription_rate) - (self.mRNA_deg_rate * imm_mRNA)
      d_imm_dt = (self.imm_rbs_affinity * self.imm_translation_rate * imm_mRNA) - (self.imm_deg_rate * imm)
      return [d_imm_mRNA_dt, d_imm_dt]
 
-  def imm_and_col(self, y, t):
+  def imm_and_col(self, y, t): 
      imm_mRNA = y[0]
      imm = y[1]
      col_mRNA = y[2]
      col = y[3]
-     #the model equations
+     #the model equations 
      d_imm_mRNA_dt = (self.imm_copy_num * self.imm_promoter_str * self.imm_transcription_rate) - (self.mRNA_deg_rate * imm_mRNA)
      d_imm_dt = (self.imm_rbs_affinity * self.imm_translation_rate * imm_mRNA) - (self.imm_deg_rate * imm)
      d_col_mRNA_dt = (self.col_copy_num * self.col_promoter_str * self.col_transcription_rate) - (self.mRNA_deg_rate * col_mRNA)
@@ -52,7 +52,7 @@ class Systems():
      imm = y[1]
      col_mRNA = y[2]
      col = y[3]
-     # the model equations
+     # the model equations 
      d_imm_mRNA_dt = (self.imm_copy_num * self.imm_promoter_str * self.imm_transcription_rate_maxicell) - (self.mRNA_deg_rate * imm_mRNA)
      d_imm_dt = (self.imm_rbs_affinity * self.imm_translation_rate * imm_mRNA) - (self.imm_deg_rate_maxicell * imm)
      d_col_mRNA_dt = (self.col_copy_num * self.col_promoter_str * self.col_transcription_rate) - (self.mRNA_deg_rate * col_mRNA)
@@ -64,7 +64,7 @@ class Systems():
      imm = y[1]
      col_mRNA = y[2]
      col = y[3]
-     # the model equations
+     # the model equations 
      d_imm_mRNA_dt = (self.imm_copy_num * self.imm_promoter_str * self.imm_transcription_rate_maxicell) - (self.mRNA_deg_rate * imm_mRNA)
      d_imm_dt = (self.imm_rbs_affinity * self.imm_translation_rate * imm_mRNA) - (self.imm_deg_rate * imm)
      d_col_mRNA_dt = (self.col_copy_num * self.col_promoter_str * self.col_transcription_rate) - (self.mRNA_deg_rate * col_mRNA)
