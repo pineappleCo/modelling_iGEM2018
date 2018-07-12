@@ -5,9 +5,11 @@ import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 
 #param pairs to screen
-copy_num_pairs = list(itertools.combinations(range(len(rates.copy_num)), 2)) + [tup[::-1] for tup in list(itertools.combinations(range(len(rates.copy_num)), 2))] + list(zip(range(len(rates.copy_num)), range(len(rates.copy_num))))
+copy_num_pairs = list(itertools.combinations(range(len(rates.copy_num)), 2)) + [tup[::-1] for tup in list(itertools.combinations(range(len(rates.copy_num)), 2))]+ list(zip(range(len(rates.copy_num)), range(len(rates.copy_num))))
 
 promoter_pairs = list(itertools.combinations(range(len(rates.anderson_str)), 2)) +[tup[::-1] for tup in list(itertools.combinations(range(len(rates.anderson_str)), 2))] + list(zip(range(len(rates.anderson_str)), range(len(rates.anderson_str))))
+
+print(len(promoter_pairs))
 
 rbs_pairs = list(itertools.combinations(range(len(rates.rbs_affinity)), 2)) + [tup[::-1] for tup in list(itertools.combinations(range(len(rates.rbs_affinity)), 2))] + list(zip(range(len(rates.rbs_affinity)), range(len(rates.rbs_affinity))))
 
@@ -31,7 +33,10 @@ init_col_sys1 = 0.
 time_sys1 = list(range(24*3600)) #24hrs
 
 #init imm and col maxicell
-time_sys2 = list(range((72*3600) + 1)) #72hrs
+time_sys2 = list(range((240*3600) + 1)) #72hrs
+
+#model count
+num_models = 0
 
 #run screen
 for i in copy_num_pairs:
@@ -85,12 +90,15 @@ for i in copy_num_pairs:
 
       result_sys2_l = list(result_sys2)
 
+      crossover = 0
+
       #maxicell active timeframe
       for l in range(len(result_sys2_l)):
         if result_sys2_l[l][3] > result_sys2_l[l][1]:
           crossover = l
           break
 
+      print('Model: ' + str(num_models))
       print('Imm Copy Number: ' + str(rates.copy_num[i[0]]))
       print('Imm Copy Number: ' + str(rates.copy_num[i[1]]))
       print('Imm Promoter Strength: ' + str(rates.anderson_str[j[0]]))
@@ -100,6 +108,8 @@ for i in copy_num_pairs:
       print('Maxicell Active Timeframe: ' + str(float(crossover)/3600.) + ' hrs')
       print('------------------------------------------------------------------')
 
+      num_models = num_models + 1
+
       lifespans.append((i[0], i[1], j[0], j[1], k[0], k[1], crossover))
       imm_mRNA_all.append((i[0], i[1], j[0], j[1], k[0], k[1], imm_mRNA_total))
       col_mRNA_all.append((i[0], i[1], j[0], j[1], k[0], k[1], col_mRNA_total))
@@ -107,7 +117,7 @@ for i in copy_num_pairs:
       col_all.append((i[0], i[1], j[0], j[1], k[0], k[1], col_total))
 
 #full timespan
-time_total = list(range(120*3600)) #120 hrs
+time_total = list(range(288*3600)) #120 hrs
 
 #plot
 fig = plt.figure(figsize=(10, 10))
