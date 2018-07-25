@@ -1,7 +1,9 @@
 import systems
 import rates
 import itertools
+import pickle
 import matplotlib.pyplot as plt
+plt.switch_backend('agg')
 from scipy.integrate import odeint
 
 #param pairs to screen
@@ -9,34 +11,28 @@ copy_num_pairs = list(itertools.combinations(range(len(rates.copy_num)), 2)) + [
 
 promoter_pairs = list(itertools.combinations(range(len(rates.anderson_str)), 2)) +[tup[::-1] for tup in list(itertools.combinations(range(len(rates.anderson_str)), 2))] + list(zip(range(len(rates.anderson_str)), range(len(rates.anderson_str))))
 
-print(len(promoter_pairs))
-
 rbs_pairs = list(itertools.combinations(range(len(rates.rbs_affinity)), 2)) + [tup[::-1] for tup in list(itertools.combinations(range(len(rates.rbs_affinity)), 2))] + list(zip(range(len(rates.rbs_affinity)), range(len(rates.rbs_affinity))))
-
-#results containers
-lifespans = []
-imm_mRNA_all = []
-col_mRNA_all = []
-imm_all = []
-col_all = []
 
 #init imm only
 init_imm_mRNA_sys0 = 0.
 init_imm_sys0 = 0.
 init_cond_sys0 = [init_imm_mRNA_sys0,
                   init_imm_sys0]
-time_sys0 = list(range((24*3600) - 1)) #24hrs
+time_sys0 = list(range((24*60) - 1)) #24hrs
 
 #init imm and col
 init_col_mRNA_sys1 = 0.
 init_col_sys1 = 0.
-time_sys1 = list(range(24*3600)) #24hrs
+time_sys1 = list(range(24*60)) #24hrs
 
 #init imm and col maxicell
-time_sys2 = list(range((240*3600) + 1)) #72hrs
+time_sys2 = list(range((240*60) + 1)) #72hrs
 
 #model count
 num_models = 0
+
+#model settings
+settings = []
 
 #run screen
 for i in copy_num_pairs:
@@ -83,10 +79,10 @@ for i in copy_num_pairs:
 
       #stitch together results of different systems
       imm_total = list(imm_sys0) + list(imm_sys1) + list(imm_sys2)
-      col_total = [0.0 for i in range((24*3600) - 1)] + list(col_sys1) + list(col_sys2)
+      col_total = [0.0 for i in range((24*60) - 1)] + list(col_sys1) + list(col_sys2)
 
       imm_mRNA_total = list(imm_mRNA_sys0) + list(imm_mRNA_sys1) + list(imm_mRNA_sys2)
-      col_mRNA_total = [0.0 for i in range((24*3600) - 1)] + list(col_mRNA_sys1) + list(col_mRNA_sys2)
+      col_mRNA_total = [0.0 for i in range((24*60) - 1)] + list(col_mRNA_sys1) + list(col_mRNA_sys2)
 
       result_sys2_l = list(result_sys2)
 
@@ -100,49 +96,85 @@ for i in copy_num_pairs:
 
       print('Model: ' + str(num_models))
       print('Imm Copy Number: ' + str(rates.copy_num[i[0]]))
-      print('Imm Copy Number: ' + str(rates.copy_num[i[1]]))
+      print('Col Copy Number: ' + str(rates.copy_num[i[1]]))
       print('Imm Promoter Strength: ' + str(rates.anderson_str[j[0]]))
       print('Col Promoter Strength: ' + str(rates.anderson_str[j[1]]))
       print('Imm RBS Affinity: ' + str(rates.rbs_affinity[k[0]]))
       print('Col RBS Affinity: ' + str(rates.rbs_affinity[k[1]]))
-      print('Maxicell Active Timeframe: ' + str(float(crossover)/3600.) + ' hrs')
+      print('Maxicell Active Timeframe: ' + str(float(crossover)/60.) + ' hrs')
       print('------------------------------------------------------------------')
+
+      settings.append((i[0], i[1], j[0], j[1], k[0], k[1]))
 
       num_models = num_models + 1
 
-      lifespans.append((i[0], i[1], j[0], j[1], k[0], k[1], crossover))
-      imm_mRNA_all.append((i[0], i[1], j[0], j[1], k[0], k[1], imm_mRNA_total))
-      col_mRNA_all.append((i[0], i[1], j[0], j[1], k[0], k[1], col_mRNA_total))
-      imm_all.append((i[0], i[1], j[0], j[1], k[0], k[1], imm_total))
-      col_all.append((i[0], i[1], j[0], j[1], k[0], k[1], col_total))
+      file = open('records/model' + str(num_models-1) + 'imm_mRNA_total', 'wb')
+      pickle.dump(imm_mRNA_total, file)
+      file.close()
+      file = open('records/model' + str(num_models-1) + 'col_mRNA_total', 'wb')
+      pickle.dump(col_mRNA_total, file)
+      file.close()
+      file = open('records/model' + str(num_models-1) + 'imm_total', 'wb')
+      pickle.dump(imm_total, file)
+      file.close()
+      file = open('records/model' + str(num_models-1) + 'col_total', 'wb')
+      pickle.dump(col_total, file)
+      file.close()
+
+      file = open("records/model_rec.txt", 'a')
+      file.write(str(num_models))
+      file.write('\n')
+      file.write(str(rates.anderson_str[j[0]]))
+      file.write('\n')
+      file.write(str(rates.anderson_str[j[1]]))
+      file.write('\n')
+      file.write(str(rates.rbs_affinity[k[0]]))
+      file.write('\n')
+      file.write(str(rates.rbs_affinity[k[1]]))
+      file.write('\n')
+      file.write(str(float(crossover)/60.) + ' hrs')
+      file.write('\n')
+      file.close()
 
 #full timespan
-time_total = list(range(288*3600)) #120 hrs
+time_total = list(range(288*60)) #288 hrs
 
 #plot
 fig = plt.figure(figsize=(10, 10))
 
 #mRNA
 plt.subplot(311)
-for switch_sys in range(len(lifespans)):
-  plt.plot(time_total, imm_mRNA_all[6], label='imm mRNA, cn:' + str(imm_mRNA_all[0]) + ', str:' + str(imm_mRNA_all[2]) + ', rbs:' + str(imm_mRNA_all[4]))
-  plt.plot(time_total, col_mRNA_all[6], label='col mRNA, cn:' + str(col_mRNA_all[1]) + ', str:' + str(col_mRNA_all[3]) + ', rbs:' + str(col_mRNA_all[5]))
+for switch_sys in range(num_models):
+  file = open('records/model' + str(switch_sys) + 'imm_mRNA_total', 'rb')
+  to_plt = pickle.load(file)
+  file.close()
+  plt.plot(time_total, to_plt, label='imm mRNA, cn:' + str(settings[switch_sys][0]) + ', str:' + str(settings[switch_sys][2]) + ', rbs:' + str(settings[switch_sys][4]))
+  file = open('records/model' + str(switch_sys) + 'col_mRNA_total', 'rb')
+  to_plt = pickle.load(file)
+  file.close()
+  plt.plot(time_total, to_plt, label='col mRNA, cn:' + str(settings[switch_sys][1]) + ', str:' + str(settings[switch_sys][3]) + ', rbs:' + str(settings[switch_sys][5]))
 plt.ylabel('mRNA Present')
-plt.legend()
-xcoords = [(24*3600) - 1 , 48*3600]
+plt.yscale('log')
+xcoords = [(24*60) - 1 , 48*60]
 for xc in xcoords:
     plt.axvline(x=xc, color = 'r', ls='dashed')
 
-plt.text((24*3600) - 1 + 0.1,  100, 'col transformation', rotation=90, color = 'r')
-plt.text(48*3600 + 0.1, 100, 'maxicell induction', rotation=90, color = 'r')
+plt.text((24*60) - 1 + 0.1,  100, 'col transformation', rotation=90, color = 'r')
+plt.text(48*60 + 0.1, 100, 'maxicell induction', rotation=90, color = 'r')
 
 #protein
 plt.subplot(312)
-for switch_sys in range(len(lifespans)):
-  plt.plot(time_total, imm_all[6], label='imm mRNA, cn:' + str(imm_all[0]) + ', str:' + str(imm_all[2]) + ', rbs:' + str(imm_all[4]))
-  plt.plot(time_total, col_all[6], label='col mRNA, cn:' + str(col_mRNA_all[1]) + ', str:' + str(col_all[3]) + ', rbs:' + str(col_all[5]))
+for switch_sys in range(num_models):
+  file = open('records/model' + str(switch_sys) + 'imm_total', 'rb')
+  to_plt = pickle.load(file)
+  file.close()
+  plt.plot(time_total, to_plt, label='imm, cn:' + str(settings[switch_sys][0]) + ', str:' + str(settings[switch_sys][2]) + ', rbs:' + str(settings[switch_sys][4]))
+  file = open('records/model' + str(switch_sys) + 'col_total', 'rb')
+  to_plt = pickle.load(file)
+  file.close()
+  plt.plot(time_total, to_plt, label='col, cn:' + str(settings[switch_sys][1]) + ', str:' + str(settings[switch_sys][3]) + ', rbs:' + str(settings[switch_sys][5]))
 plt.ylabel('Protein Present')
-plt.legend()
+plt.yscale('log')
 for xc in xcoords:
     plt.axvline(x=xc, color = 'r', ls='dashed')
 
